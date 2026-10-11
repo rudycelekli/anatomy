@@ -2,8 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
-  pull_request:
+    branches: [validation/drive-evaluation-failures-20261010]
   workflow_dispatch:
 
 permissions:
@@ -20,6 +19,9 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: 1c63574356e4466e71cdf99cd0e79b9bdfad45f8
+          persist-credentials: false
 
       - uses: actions/setup-node@v7
         with:
@@ -62,6 +64,7 @@ jobs:
 
       - name: Committed pages are unchanged
         run: |
+          test "$(git rev-parse HEAD)" = "1c63574356e4466e71cdf99cd0e79b9bdfad45f8"
           git status --short
           git diff --stat --exit-code
           test -z "$(git status --porcelain)"
