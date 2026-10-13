@@ -16,6 +16,14 @@ concurrency:
 jobs:
   examples:
     name: Rebuild the examples
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: baseline
+            source_head: e6600ffc4e8e6620eeb45bf49bcdbd5e4b84163f
+          - variant: candidate
+            source_head: d0fc75b3c07c44c0f0462b07dfa4cb89eac7010d
     runs-on: macos-latest
     defaults:
       run:
@@ -31,7 +39,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: rudycelekli/anatomy
-          ref: d0fc75b3c07c44c0f0462b07dfa4cb89eac7010d
+          ref: ${{ matrix.source_head }}
           path: source
           persist-credentials: false
 
@@ -42,8 +50,8 @@ jobs:
       - name: Exact reviewed source guards
         run: |
           test "$(git -C ../packet rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(shasum -a 256 ../packet/proof/full-source-guard.py | cut -d' ' -f1)" = "97ff6136efddd183b3de2dd4a260917c2a88bc27683d70773cedc371260b8e9b"
-          python3 ../packet/proof/full-source-guard.py . ../source-before.json
+          test "$(shasum -a 256 ../packet/proof/paired-source-guard.py | cut -d' ' -f1)" = "6c6f48d0333d0f63628888dd6db4c934f3e9cd5b0b462ceffc84ceb5a11a930a"
+          python3 ../packet/proof/paired-source-guard.py . ../source-before.json ${{ matrix.variant }}
 
       - name: Regression tests
         run: |
@@ -53,26 +61,31 @@ jobs:
           NODE_PATH="$test_deps/node_modules" node --test scripts/*.test.mjs
 
       - name: Dial indicator
+        if: always()
         run: |
           node examples/dial-indicator/build.mjs
           node examples/dial-indicator/build.mjs --light
 
       - name: Desk computer
+        if: always()
         run: |
           node examples/desk-computer/build.mjs
           node examples/desk-computer/build.mjs --light
 
       - name: Arcade cabinet
+        if: always()
         run: |
           node examples/arcade-cabinet/build.mjs
           node examples/arcade-cabinet/build.mjs --light
 
       - name: Ripple tank
+        if: always()
         run: |
           node examples/ripple-tank/build.mjs
           node examples/ripple-tank/build.mjs --light
 
       - name: Turning dial
+        if: always()
         run: |
           node examples/turning-dial/build.mjs
           node examples/turning-dial/build.mjs --light
@@ -80,11 +93,13 @@ jobs:
           node examples/turning-dial/stress.mjs --light
 
       - name: Raptor engine
+        if: always()
         run: |
           node examples/raptor-engine/build.mjs
           node examples/raptor-engine/build.mjs --light
 
       - name: Committed pages are unchanged
+        if: always()
         run: |
           git status --short
           git diff --stat --exit-code
@@ -93,12 +108,12 @@ jobs:
 
       - name: Final independent source hash guard
         if: always()
-        run: python3 ../packet/proof/full-source-guard.py . ../source-after.json
+        run: python3 ../packet/proof/paired-source-guard.py . ../source-after.json ${{ matrix.variant }}
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
-          name: reviewed-curve-source-receipts
+          name: reviewed-curve-paired-${{ matrix.variant }}
           path: |
             source-before.json
             source-after.json
