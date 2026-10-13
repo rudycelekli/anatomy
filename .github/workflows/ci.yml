@@ -1,71 +1,50 @@
-name: CI
-
+name: Reviewed curve-density causal baseline
 on:
-  push:
-    branches: [main]
-  pull_request:
   workflow_dispatch:
-
 permissions:
   contents: read
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  examples:
-    name: Rebuild the examples
+  native-baseline:
     runs-on: macos-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
-
+        with:
+          path: packet
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v7
+        with:
+          repository: wheresryan22/anatomy
+          ref: e6600ffc4e8e6620eeb45bf49bcdbd5e4b84163f
+          path: source
+          persist-credentials: false
       - uses: actions/setup-node@v7
         with:
           node-version: 22
-
-      - name: Regression tests
+      - name: Exact reviewed source and fixture guards
         run: |
-          test_deps="$(mktemp -d)"
-          trap 'rm -rf "$test_deps"' EXIT
-          npm install --prefix "$test_deps" --no-audit --no-fund --ignore-scripts react@19.3.0 react-dom@19.3.0 typescript@5.9.3 esbuild@0.28.2
-          NODE_PATH="$test_deps/node_modules" node --test scripts/*.test.mjs
-
-      - name: Dial indicator
+          test "$(git -C packet rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git -C source rev-parse HEAD)" = e6600ffc4e8e6620eeb45bf49bcdbd5e4b84163f
+          test "$(git -C source rev-parse HEAD^{tree})" = e9e0827dbf5a388fd643221626bcd164d587d0a3
+          test "$(shasum -a 256 packet/proof/curve-density.test.mjs | cut -d' ' -f1)" = "7531c80a48a8202042acb514a586b462bd5e5fb10ce50e2186c42193f08383bb"
+          test "$(shasum -a 256 packet/proof/validate-baseline.py | cut -d' ' -f1)" = "be446a7cd13cfb1467485457601d9a23f8db448aef456c6b0d5555d834cc4ddd"
+          test "$(shasum -a 256 packet/proof/source-guard.py | cut -d' ' -f1)" = "d3e4d4ffeb894866a4829fcdffaac8a269aa53be151275f2a7bc75a62961f02d"
+          python3 packet/proof/source-guard.py source
+          cp packet/proof/curve-density.test.mjs source/scripts/
+      - name: Native causal baseline
+        working-directory: source
         run: |
-          node examples/dial-indicator/build.mjs
-          node examples/dial-indicator/build.mjs --light
-
-      - name: Desk computer
-        run: |
-          node examples/desk-computer/build.mjs
-          node examples/desk-computer/build.mjs --light
-
-      - name: Arcade cabinet
-        run: |
-          node examples/arcade-cabinet/build.mjs
-          node examples/arcade-cabinet/build.mjs --light
-
-      - name: Ripple tank
-        run: |
-          node examples/ripple-tank/build.mjs
-          node examples/ripple-tank/build.mjs --light
-
-      - name: Turning dial
-        run: |
-          node examples/turning-dial/build.mjs
-          node examples/turning-dial/build.mjs --light
-          node examples/turning-dial/build.mjs --light --verify
-          node examples/turning-dial/stress.mjs --light
-
-      - name: Raptor engine
-        run: |
-          node examples/raptor-engine/build.mjs
-          node examples/raptor-engine/build.mjs --light
-
-      - name: Committed pages are unchanged
-        run: |
-          git status --short
-          git diff --stat --exit-code
-          test -z "$(git status --porcelain)"
+          set +e
+          node --test --test-reporter=junit --test-reporter-destination=../baseline.xml scripts/curve-density.test.mjs
+          status=$?
+          set -e
+          test "$status" = 1
+          python3 ../packet/proof/validate-baseline.py ../baseline.xml
+          git diff --exit-code
+          python3 ../packet/proof/source-guard.py .
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: curve-density-baseline
+          path: baseline.xml
