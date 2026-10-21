@@ -1,0 +1,109 @@
+name: Anatomy123 current-main native integration proof
+'on':
+  workflow_dispatch: {}
+  push:
+    branches:
+    - proof/anatomy123-native-20261021
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        source:
+        - main
+        - candidate
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        repository: wheresryan22/anatomy
+        ref: 1482e8469b0a9e0d8cc18ea2740a01423d29ae80
+        persist-credentials: false
+    - uses: actions/setup-node@v7
+      with:
+        node-version: 22
+    - name: Bind exact base and apply only source patch
+      run: "set -euo pipefail\n[ \"$(git rev-parse HEAD)\" = \"1482e8469b0a9e0d8cc18ea2740a01423d29ae80\" ]\nmkdir -p \"$RUNNER_TEMP/proof\"\nprintf '%s\\n' \"${ImageOS:-unknown}\" \"${ImageVersion:-unknown}\" > \"$RUNNER_TEMP/proof/runner-image.txt\"\nif [ \"${{ matrix.source }}\" = candidate ]; then\n  printf '%s' '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' | base64 --decode | gzip --decompress > /tmp/source.patch\n  echo 'b2b9ebd029ec12d67cdd0109e05f12bd371c1adcf84feed2d7e52e997614c937  /tmp/source.patch' | shasum -a 256 -c -\n  git apply --index /tmp/source.patch\nfi\nnode --version > \"$RUNNER_TEMP/proof/node-version.txt\"\n"
+    - name: Dial indicator
+      run: 'node examples/dial-indicator/build.mjs
+
+        node examples/dial-indicator/build.mjs --light
+
+        '
+    - name: Desk computer
+      run: 'node examples/desk-computer/build.mjs
+
+        node examples/desk-computer/build.mjs --light
+
+        '
+    - name: Arcade cabinet
+      run: 'node examples/arcade-cabinet/build.mjs
+
+        node examples/arcade-cabinet/build.mjs --light
+
+        '
+    - name: Ripple tank
+      run: 'node examples/ripple-tank/build.mjs
+
+        node examples/ripple-tank/build.mjs --light
+
+        '
+    - name: Turning dial
+      run: 'node examples/turning-dial/build.mjs
+
+        node examples/turning-dial/build.mjs --light
+
+        node examples/turning-dial/build.mjs --light --verify
+
+        node examples/turning-dial/stress.mjs --light
+
+        '
+    - name: Raptor engine
+      run: 'node examples/raptor-engine/build.mjs
+
+        node examples/raptor-engine/build.mjs --light
+
+        '
+    - name: Push button
+      run: 'node examples/push-button/build.mjs
+
+        node examples/push-button/build.mjs --light
+
+        '
+    - name: Match every regenerated page and source to qualified candidate tree
+      run: "set -euo pipefail\ngit add -u\nexpected='89299cdfce386a71723a7e57bb9fe219875582fc'\nif [ \"${{ matrix.source }}\" = candidate ]; then expected='b59cfacec9b8cd6dd038783167556c5fc651b559'; fi\n[ \"$(git write-tree)\" = \"$expected\" ]\nprintf '%s\\n' \"$expected\" > \"$RUNNER_TEMP/proof/source-tree.txt\"\nif [ \"${{ matrix.source }}\" = candidate ]; then\n  proof_commit=$(printf '%s\\n' 'Private exact-tree native qualification' | git -c user.name='Proof Runner' -c user.email='proof@example.invalid' commit-tree \"$expected\" -p 1482e8469b0a9e0d8cc18ea2740a01423d29ae80)\n  git update-ref HEAD \"$proof_commit\"\nfi\ngit diff --check\ngit diff --cached --check\ntest -z \"$(git status --porcelain)\"\n"
+    - name: Regression tests
+      run: 'test_deps="$(mktemp -d)"
+
+        trap ''rm -rf "$test_deps"'' EXIT
+
+        npm install --prefix "$test_deps" --no-audit --no-fund --ignore-scripts react@19.3.0 react-dom@19.3.0 typescript@5.9.3 esbuild@0.28.2
+
+        NODE_PATH="$test_deps/node_modules" node --test scripts/*.test.mjs > "$RUNNER_TEMP/proof/canonical-tests.log" 2>&1
+
+        '
+    - name: Capture changed rounded-corner examples at4x in both themes
+      if: success() && matrix.source == 'candidate'
+      run: "set -euo pipefail\nfor page in arcade-cabinet/arcade-cabinet arcade-cabinet/arcade-cabinet-light desk-computer/desk-computer desk-computer/desk-computer-light; do\n  node scripts/capture.mjs \"examples/$page.html\" --out \"$RUNNER_TEMP/proof/${page##*/}-4x.png\" --scale 4 --reduced > \"$RUNNER_TEMP/proof/${page##*/}-capture.log\" 2>&1\ndone\n"
+    - name: Always verify unchanged tracked sources
+      if: always()
+      run: 'set -euo pipefail
+
+        git diff --exit-code
+
+        git diff --cached --exit-code
+
+        [ "$(git write-tree)" = "$(cat "$RUNNER_TEMP/proof/source-tree.txt")" ]
+
+        printf ''%s\n'' PASS > "$RUNNER_TEMP/proof/post-source-guard.txt"
+
+        '
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: anatomy123-${{ matrix.source }}
+        path: ${{ runner.temp }}/proof
+        if-no-files-found: error
