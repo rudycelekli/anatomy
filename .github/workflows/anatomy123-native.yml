@@ -74,7 +74,7 @@ jobs:
 
         '
     - name: Match every regenerated page and source to qualified candidate tree
-      run: "set -euo pipefail\ngit add -u\nexpected='89299cdfce386a71723a7e57bb9fe219875582fc'\nif [ \"${{ matrix.source }}\" = candidate ]; then expected='b59cfacec9b8cd6dd038783167556c5fc651b559'; fi\n[ \"$(git write-tree)\" = \"$expected\" ]\nprintf '%s\\n' \"$expected\" > \"$RUNNER_TEMP/proof/source-tree.txt\"\nif [ \"${{ matrix.source }}\" = candidate ]; then\n  proof_commit=$(printf '%s\\n' 'Private exact-tree native qualification' | git -c user.name='Proof Runner' -c user.email='proof@example.invalid' commit-tree \"$expected\" -p 1482e8469b0a9e0d8cc18ea2740a01423d29ae80)\n  git update-ref HEAD \"$proof_commit\"\nfi\ngit diff --check\ngit diff --cached --check\ntest -z \"$(git status --porcelain)\"\n"
+      run: "set -euo pipefail\ngit add -u\nexpected='89299cdfce386a71723a7e57bb9fe219875582fc'\nif [ \"${{ matrix.source }}\" = candidate ]; then expected='04ea16fb290cabe30634fa9522961771636e26cf'; fi\n[ \"$(git write-tree)\" = \"$expected\" ]\nprintf '%s\\n' \"$expected\" > \"$RUNNER_TEMP/proof/source-tree.txt\"\nif [ \"${{ matrix.source }}\" = candidate ]; then\n  proof_commit=$(printf '%s\\n' 'Private exact-tree native qualification' | git -c user.name='Proof Runner' -c user.email='proof@example.invalid' commit-tree \"$expected\" -p 1482e8469b0a9e0d8cc18ea2740a01423d29ae80)\n  git update-ref HEAD \"$proof_commit\"\nfi\ngit diff --check\ngit diff --cached --check\ntest -z \"$(git status --porcelain)\"\n"
     - name: Regression tests
       run: 'test_deps="$(mktemp -d)"
 
